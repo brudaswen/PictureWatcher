@@ -37,8 +37,21 @@ public class MainActivity extends FragmentActivity {
     private PicturePagerAdapter adapter;
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        App.get().setInForeground(false);
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        App.get().setInForeground(true);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        App.get().activity = this;
         setContentView(R.layout.activity_main);
 
         folder = new File(Environment.getExternalStorageDirectory(), "DCIM/Camera");
@@ -84,7 +97,8 @@ public class MainActivity extends FragmentActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        observer.startWatching();
+        App.get().activity = null;
+        observer.stopWatching();
     }
 
     @Override
