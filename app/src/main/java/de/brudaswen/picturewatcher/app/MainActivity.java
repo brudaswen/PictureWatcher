@@ -1,6 +1,7 @@
 package de.brudaswen.picturewatcher.app;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,6 +9,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileObserver;
+import android.os.Handler;
+import android.os.PowerManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -35,37 +38,55 @@ public class MainActivity extends FragmentActivity {
     private FileObserver observer;
     private File folder;
     private PicturePagerAdapter adapter;
+    private Handler handler = new Handler();
+    private PowerManager.WakeLock wakeLock;
 
     @Override
     protected void onStop() {
         super.onStop();
         App.get().setInForeground(false);
+//        wakeLock.release();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
         App.get().setInForeground(true);
+//        wakeLock.acquire();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+//        wakeLock = powerManager.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP, "PictureWatcher");
         App.get().activity = this;
         setContentView(R.layout.activity_main);
 
-        folder = new File(Environment.getExternalStorageDirectory(), "DCIM/Camera");
+        folder = new File(Environment.getExternalStorageDirectory(), "DCIM/DSLR");
 
         ViewPager pager = (ViewPager) findViewById(R.id.view_pager);
         adapter = new PicturePagerAdapter(getSupportFragmentManager());
         pager.setAdapter(adapter);
 
         Intent service = new Intent(this, PictureWatcherService.class);
-        startService(service);
+//        startService(service);
 
         observer = new FileObserver(folder.getAbsolutePath(), FileObserver.CREATE) {
             @Override
             public void onEvent(int event, String path) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                updateState();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+//                        updateState();
+                    }
+                }, 2000);
                 updateState();
             }
         };

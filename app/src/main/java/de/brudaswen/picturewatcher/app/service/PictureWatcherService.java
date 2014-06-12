@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
 
@@ -28,7 +29,7 @@ public class PictureWatcherService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        final File folder = new File("/sdcard/DCIM/Camera");
+        final File folder = new File(Environment.getExternalStorageDirectory(), "DCIM/DSLR");
         observer = new FileObserver(folder.getAbsolutePath(), FileObserver.CREATE) {
             @Override
             public void onEvent(int event, String path) {
