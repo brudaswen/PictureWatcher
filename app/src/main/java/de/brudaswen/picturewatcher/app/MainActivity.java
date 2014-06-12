@@ -40,6 +40,7 @@ public class MainActivity extends FragmentActivity {
     private PicturePagerAdapter adapter;
     private Handler handler = new Handler();
     private PowerManager.WakeLock wakeLock;
+    private ViewPager pager;
 
     @Override
     protected void onStop() {
@@ -65,7 +66,7 @@ public class MainActivity extends FragmentActivity {
 
         folder = new File(Environment.getExternalStorageDirectory(), "DCIM/DSLR");
 
-        ViewPager pager = (ViewPager) findViewById(R.id.view_pager);
+        pager = (ViewPager) findViewById(R.id.view_pager);
         adapter = new PicturePagerAdapter(getSupportFragmentManager());
         pager.setAdapter(adapter);
 
@@ -75,19 +76,19 @@ public class MainActivity extends FragmentActivity {
         observer = new FileObserver(folder.getAbsolutePath(), FileObserver.CREATE) {
             @Override
             public void onEvent(int event, String path) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                updateState();
+//                try {
+//                    Thread.sleep(2000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                updateState();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-//                        updateState();
+                        updateState();
                     }
                 }, 2000);
-                updateState();
+//                updateState();
             }
         };
         observer.startWatching();
@@ -105,7 +106,7 @@ public class MainActivity extends FragmentActivity {
         Arrays.sort(pictures, new Comparator<File>() {
             @Override
             public int compare(File lhs, File rhs) {
-                if(lhs.lastModified() > rhs.lastModified()) {
+                if (lhs.lastModified() < rhs.lastModified()) {
                     return -1;
                 } else {
                     return 1;
@@ -113,6 +114,7 @@ public class MainActivity extends FragmentActivity {
             }
         });
         adapter.setPictures(pictures);
+        pager.setCurrentItem(pictures.length > 0 ? pictures.length - 1 : 0);
     }
 
     @Override
@@ -154,6 +156,11 @@ public class MainActivity extends FragmentActivity {
         public Fragment getItem(int position) {
             return PictureFragment.newInstance(pictures[position]);
         }
+
+//        @Override
+//        public Object instantiateItem(ViewGroup container, int position) {
+//            return getItem(position);
+//        }
 
         @Override
         public int getCount() {
