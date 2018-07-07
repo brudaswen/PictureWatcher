@@ -1,8 +1,9 @@
 package de.brudaswen.picturewatcher.app;
 
+import android.Manifest;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -11,11 +12,14 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,54 +50,57 @@ public class MainActivity extends FragmentActivity {
     protected void onStop() {
         super.onStop();
         App.get().setInForeground(false);
-//        wakeLock.release();
+        //        wakeLock.release();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
         App.get().setInForeground(true);
-//        wakeLock.acquire();
+        //        wakeLock.acquire();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-//        wakeLock = powerManager.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP, "PictureWatcher");
+        //        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        //        wakeLock = powerManager.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP, "PictureWatcher");
         App.get().activity = this;
-        setContentView(R.layout.activity_main);
 
-        folder = new File(Environment.getExternalStorageDirectory(), "DCIM/DSLR");
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    42);
+        } else {
 
-        pager = (ViewPager) findViewById(R.id.view_pager);
-        adapter = new PicturePagerAdapter(getSupportFragmentManager());
-        pager.setAdapter(adapter);
+            setContentView(R.layout.activity_main);
 
-        Intent service = new Intent(this, PictureWatcherService.class);
-//        startService(service);
+            folder = new File(Environment.getExternalStorageDirectory(), "DCIM/DSLR");
 
-        observer = new FileObserver(folder.getAbsolutePath(), FileObserver.CREATE) {
-            @Override
-            public void onEvent(int event, String path) {
-//                try {
-//                    Thread.sleep(2000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                updateState();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateState();
-                    }
-                }, 2000);
-//                updateState();
-            }
-        };
-        observer.startWatching();
+            pager = (ViewPager) findViewById(R.id.view_pager);
+            adapter = new PicturePagerAdapter(getSupportFragmentManager());
+            pager.setAdapter(adapter);
 
-        updateState();
+            Intent service = new Intent(this, PictureWatcherService.class);
+            //        startService(service);
+
+            observer = new FileObserver(folder.getAbsolutePath(), FileObserver.CREATE) {
+                @Override
+                public void onEvent(final int event, final String path) {
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateState();
+                        }
+                    }, 2000);
+                }
+            };
+            observer.startWatching();
+
+            updateState();
+        }
     }
 
     private void updateState() {
@@ -157,10 +164,10 @@ public class MainActivity extends FragmentActivity {
             return PictureFragment.newInstance(pictures[position]);
         }
 
-//        @Override
-//        public Object instantiateItem(ViewGroup container, int position) {
-//            return getItem(position);
-//        }
+        //        @Override
+        //        public Object instantiateItem(ViewGroup container, int position) {
+        //            return getItem(position);
+        //        }
 
         @Override
         public int getCount() {
@@ -196,9 +203,7 @@ public class MainActivity extends FragmentActivity {
         public void onResume() {
             super.onResume();
 
-            Bitmap bitmap = decodeSampledBitmapFromUri(
-                    Uri.fromFile(new File(picture)),
-                    1280, 1280);
+            Bitmap bitmap = decodeSampledBitmapFromUri(Uri.fromFile(new File(picture)), 1280, 1280);
 
             imageView.setImageBitmap(bitmap);
         }
